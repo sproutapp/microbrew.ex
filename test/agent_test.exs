@@ -160,7 +160,7 @@ defmodule AgentTest do
             } |> signal("some::event")
           end
 
-          it "fires the callback with the payload" do
+          it "fires the callback with the payload data" do
             allow(AMQP.Queue)
               |> to_receive(subscribe: fn (_, _, cb) ->
                 payload = %{
@@ -173,7 +173,7 @@ defmodule AgentTest do
               end)
 
             a_signal |> on(:data, fn (payload, _) ->
-              expect payload["data"]
+              expect payload
                 |> to_eq "some data"
             end)
           end

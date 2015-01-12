@@ -37,7 +37,7 @@ defmodule Microbrew.Agent do
       {_, payload} = JSX.decode(payload)
 
       if payload["event"] == signal.event do
-        callback.(payload, meta)
+        callback.(payload["data"], meta)
       end
     end
 
