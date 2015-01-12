@@ -1,9 +1,10 @@
 # Microbrew
-A Microservices Toolkit
+A Microservices Toolkit. Provides a simple, composable framework for exchanging messages in a distributed system. Currently supports AMQP message brokers, but it has only been tested with RabbitMQ so far.
 
-## Agent
-Not to be mistaken with an Elixir.Agent, a Microbrew `Agent` is an entity that
-can be used to receive and emit signals.
+## Agents
+Agents are at the core of Microbrew.
+Not to be mistaken with an `Elixir.Agent`, a `Microbrew.Agent` is an entity that
+can be used to receive and emit signals in a distributed system.
 
 You can create an agent using the `new` method:
 
@@ -19,7 +20,7 @@ Microbrew.Agent.new(
 Using `new` automatically configures your `Agent` with Consumer and Producer
 capabilities.
 
-## Consume
+### .consume
 Instead of using `Microbrew.Agent.new`, you can create the struct yourself and
 use the composable `consume` method:
 
@@ -33,7 +34,7 @@ agent = %Microbrew.Agent{
 agent |> consume |> ...
 ```
 
-## Signal
+### .signal
 A signal models an event in the system. It is mainly used to compose into the
 `on` and `emit` methods.
 
@@ -42,10 +43,10 @@ agent |> signal "temperature::new"
 # => %Signal{agent: agent, event: "temperature::new"}
 ```
 
-## on
+### .on
 Sets up a consumer for a given `Signal`. Currently the only consumer supported
 is `:data`. It is triggered whenever any kind of data payload that matches your
-`Signal` comes in through the wire. Payloads are decoded from JSON into `Map`s.
+`Signal` comes in through the wire. Payloads are decoded from JSON into `Maps`.
 
 ```elixir
 agent
@@ -55,7 +56,7 @@ agent
  end
 ```
 
-## emit
+### .emit
 Publishes a payload under a given `Signal`. Payloads are published in
 JSON format.
 
