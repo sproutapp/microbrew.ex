@@ -4,7 +4,7 @@ defmodule Microbrew.Consumer do
   defstruct channel: nil, queue: nil
   alias __MODULE__
 
-  def new(queue, exchange) do
+  def new(exchange, queue, queue_error) do
     {:ok, conn} = AMQP.Connection.open
     {:ok, chan} = AMQP.Channel.open(conn)
     AMQP.Queue.declare(chan, "#{queue}_error", durable: true)
