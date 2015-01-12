@@ -18,11 +18,21 @@ Microbrew.Agent.new(
 ```
 
 Using `new` automatically configures your `Agent` with Consumer and Producer
-capabilities.
+capabilities. While producing content has no continuous overhead, a constant
+connection is required to consume content, so you may wish not to use `.new` and
+instead create the struct yourself.
+
+```elixir
+agent = %Microbrew.Agent{
+  exchange: "an_exchange",
+  queue: "a_queue",
+  queue_error: "an_error_queue",
+}
+```
 
 ### .consume
-Instead of using `Microbrew.Agent.new`, you can create the struct yourself and
-use the composable `consume` method:
+If you already have an agent created without Consumer capabilities, you can
+add them by calling `consume`:
 
 ```elixir
 agent = %Microbrew.Agent{

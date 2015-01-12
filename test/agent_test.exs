@@ -181,4 +181,56 @@ defmodule AgentTest do
       end
     end
   end
+
+  describe ".emit" do
+    before :each do
+      allow(Microbrew.Producer)
+        |> to_receive(publish: fn (_, _, _) -> nil end)
+
+      :ok
+    end
+
+    let :exchange do
+      "exchange"
+    end
+    let :queue do
+      "queue"
+    end
+    let :queue_error do
+      "queue_error"
+    end
+
+    let :a_signal do
+      Microbrew.Agent.new(
+        exchange:    exchange,
+        queue:       queue,
+        queue_error: queue_error
+      ) |> signal "some::event"
+    end
+
+    let :an_agent do
+      a_signal.agent
+    end
+
+    let :payload do
+      %{ :a_key => "some data" }
+    end
+
+    let :encoded_payload do
+      p = %Microbrew.Payload{
+        event: a_signal.event,
+        data: payload
+      }
+      {_, p} = JSX.encode p
+      p
+    end
+
+    it "publishes a signal with a given payload" do
+      a_signal |> emit payload
+
+      expect(Microbrew.Producer)
+        |> to_have_received :publish
+        |> with [an_agent.exchange, encoded_payload]
+    end
+  end
 end
