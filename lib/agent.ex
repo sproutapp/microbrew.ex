@@ -1,8 +1,4 @@
 defmodule Microbrew.Agent do
-  import JSX
-  import AMQP
-  import Microbrew.Consumer
-
   defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil
   alias __MODULE__
 
@@ -46,6 +42,18 @@ defmodule Microbrew.Agent do
     end
 
     signal.agent
+  end
+
+  def emit(signal, payload) do
+    payload = %Microbrew.Payload{
+      event: signal.event,
+      data: payload
+    }
+    {_, payload} = JSX.encode(payload)
+
+    agent = signal.agent
+
+    Microbrew.Producer.publish(agent.exchange, payload)
   end
 
   def stop(signal) do
