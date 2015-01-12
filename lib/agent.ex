@@ -15,14 +15,18 @@ defmodule Microbrew.Agent do
     queue = Keyword.get(options, :queue, "")
     queue_error = Keyword.get(options, :queue_error, nil)
 
-    {:ok, consumer} = Microbrew.Consumer.new(exchange, queue, queue_error)
-
-    %Agent{
+    agent = %Agent{
       exchange: exchange,
       queue: queue,
       queue_error: queue_error,
-      consumer: consumer
     }
+
+    __MODULE__.consume(agent)
+  end
+
+  def consume(agent) do
+    {:ok, consumer} = Microbrew.Consumer.new(agent.exchange, agent.queue, agent.queue_error)
+    %{agent | consumer: consumer}
   end
 
   def signal(agent, event) do
@@ -34,6 +38,8 @@ defmodule Microbrew.Agent do
     queue = signal.agent.queue
 
     AMQP.Queue.subscribe channel, queue, fn (payload, meta) ->
+      {_, payload} = JSX.decode(payload)
+
       if payload["event"] == signal.event do
         callback.(payload, meta)
       end

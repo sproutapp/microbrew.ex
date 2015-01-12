@@ -1,4 +1,4 @@
-defmodule SignalTest do
+defmodule AgentTest do
   use Pavlov.Case, async: true
   import Pavlov.Syntax.Expect
   use Pavlov.Mocks
@@ -16,6 +16,10 @@ defmodule SignalTest do
       "queue_error"
     end
 
+    let :consumer do
+      %Microbrew.Consumer{channel: nil, queue: nil}
+    end
+
     let :sample do
       Microbrew.Agent.new(
         exchange:    exchange,
@@ -24,13 +28,9 @@ defmodule SignalTest do
       )
     end
 
-    let :consumer do
-      %Microbrew.Consumer{channel: nil, queue: nil}
-    end
-
     before :each do
-      allow(Microbrew.Consumer)
-        |> to_receive(new: fn (_, _, _) -> {:ok, consumer} end)
+      allow(Microbrew.Agent, [:no_link, :passthrough])
+        |> to_receive(consume: fn (a) -> %Microbrew.Agent{a | consumer: consumer} end)
       :ok
     end
 
@@ -49,17 +49,54 @@ defmodule SignalTest do
     end
 
     it "creates a Consumer" do
-      agent = Microbrew.Agent.new(
+      sample = Microbrew.Agent.new(
         exchange:    exchange,
         queue:       queue,
         queue_error: queue_error
       )
 
+      expect sample.consumer
+        |> to_eq consumer
+    end
+  end
+
+  describe ".consume" do
+    let :exchange do
+      "exchange"
+    end
+    let :queue do
+      "queue"
+    end
+    let :queue_error do
+      "queue_error"
+    end
+
+    let :consumer do
+      %Microbrew.Consumer{channel: nil, queue: nil}
+    end
+
+    let :sample do
+      %Microbrew.Agent{
+        exchange:    exchange,
+        queue:       queue,
+        queue_error: queue_error
+      }
+    end
+
+    before :each do
+      allow(Microbrew.Consumer)
+        |> to_receive(new: fn (_, _, _) -> {:ok, consumer} end)
+      :ok
+    end
+
+    it "creates a Consumer" do
+      sample = sample |> consume
+
       expect Microbrew.Consumer
         |> to_have_received :new
         |> with [exchange, queue, queue_error]
 
-      expect agent.consumer
+      expect sample.consumer
         |> to_eq consumer
     end
   end
@@ -130,6 +167,8 @@ defmodule SignalTest do
                   "event" => "some::event",
                   "data"  => "some data"
                 }
+                {_, payload} = JSX.encode(payload)
+
                 cb.(payload, nil)
               end)
 
