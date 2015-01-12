@@ -185,7 +185,7 @@ defmodule AgentTest do
   describe ".emit" do
     before :each do
       allow(Microbrew.Producer)
-        |> to_receive(publish: fn (_, _, _) -> nil end)
+        |> to_receive(publish: fn (_, _) -> nil end)
 
       :ok
     end
