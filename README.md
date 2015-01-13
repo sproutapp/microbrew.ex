@@ -75,3 +75,13 @@ signal "temperature::new"
   |> emit "hello world"
 # => {:ok}
 ```
+
+### .stop
+Stops an `Agent`. This effectively shuts down any `Consumer` behaviour for the
+given `Agent`. You can still publish, though. To restart `Consumer` behaviour use
+`.consume`.
+
+```elixir
+agent |> stop
+# => :ok
+```

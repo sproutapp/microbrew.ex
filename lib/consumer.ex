@@ -18,4 +18,9 @@ defmodule Microbrew.Consumer do
 
     {:ok, %Consumer{channel: chan, queue: queue}}
   end
+
+  def close(consumer) do
+    IO.puts "closing"
+    AMQP.Channel.close(consumer.channel)
+  end
 end

@@ -21,6 +21,10 @@ defmodule Microbrew.Agent do
   end
 
   def consume(agent) do
+    if agent.consumer != nil && agent.consumer.channel != nil do
+      agent = Microbrew.Agent.stop agent
+    end
+
     {:ok, consumer} = Microbrew.Consumer.new(agent.exchange, agent.queue, agent.queue_error)
     %{agent | consumer: consumer}
   end
@@ -56,7 +60,9 @@ defmodule Microbrew.Agent do
     Microbrew.Producer.publish(agent.exchange, payload)
   end
 
-  def stop(signal) do
-    AMQP.Channel.close(signal.consumer.channel)
+  def stop(agent) do
+    case Microbrew.Consumer.close(agent.consumer) do
+      :ok -> %{agent | consumer: nil}
+    end
   end
 end
