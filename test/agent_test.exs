@@ -6,25 +6,15 @@ defmodule AgentTest do
   import Microbrew.Agent
 
   describe ".new" do
-    let :exchange do
-      "exchange"
-    end
-    let :queue do
-      "queue"
-    end
-    let :queue_error do
-      "queue_error"
-    end
-
     let :consumer do
       %Microbrew.Consumer{channel: nil, queue: nil}
     end
 
     let :sample do
       Microbrew.Agent.new(
-        exchange:    exchange,
-        queue:       queue,
-        queue_error: queue_error
+        exchange:    "exchange",
+        queue:       "queue",
+        queue_error: "queue_error"
       )
     end
 
@@ -39,20 +29,20 @@ defmodule AgentTest do
         |> to_eq Microbrew.Agent
 
       expect sample.exchange
-        |> to_eq exchange
+        |> to_eq "exchange"
 
       expect sample.queue
-        |> to_eq queue
+        |> to_eq "queue"
 
       expect sample.queue_error
-        |> to_eq queue_error
+        |> to_eq "queue_error"
     end
 
     it "creates a Consumer" do
       sample = Microbrew.Agent.new(
-        exchange:    exchange,
-        queue:       queue,
-        queue_error: queue_error
+        exchange:    "exchange",
+        queue:       "queue",
+        queue_error: "queue_error"
       )
 
       expect sample.consumer
@@ -61,25 +51,15 @@ defmodule AgentTest do
   end
 
   describe ".consume" do
-    let :exchange do
-      "exchange"
-    end
-    let :queue do
-      "queue"
-    end
-    let :queue_error do
-      "queue_error"
-    end
-
     let :consumer do
       %Microbrew.Consumer{channel: nil, queue: nil}
     end
 
     let :sample do
       %Microbrew.Agent{
-        exchange:    exchange,
-        queue:       queue,
-        queue_error: queue_error
+        exchange:    "exchange",
+        queue:       "queue",
+        queue_error: "queue_error"
       }
     end
 
@@ -94,10 +74,41 @@ defmodule AgentTest do
 
       expect Microbrew.Consumer
         |> to_have_received :new
-        |> with [exchange, queue, queue_error]
+        |> with ["exchange", "queue", "queue_error"]
 
       expect sample.consumer
         |> to_eq consumer
+    end
+
+    context "When there is already a Consumer with a non-nil channel" do
+      let :a_consumer do
+        %Microbrew.Consumer{channel: "channel", queue: nil}
+      end
+
+      before :each do
+        allow(Microbrew.Consumer, [:no_link, :passthrough])
+          |> to_receive(new: fn (_, _, _) -> {:ok, a_consumer} end)
+
+        allow(Microbrew.Agent, [:no_link, :passthrough])
+          |> to_receive(stop: fn(a) -> a end)
+
+        :ok
+      end
+
+      it "stops the agent" do
+        agent = %Microbrew.Agent{
+          exchange:    "exchange",
+          queue:       "queue",
+          queue_error: "queue_error",
+          consumer:    a_consumer
+        }
+
+        agent |> consume
+
+        expect Microbrew.Agent
+          |> to_have_received :stop
+          |> with %{agent | consumer: a_consumer}
+      end
     end
   end
 
@@ -190,21 +201,11 @@ defmodule AgentTest do
       :ok
     end
 
-    let :exchange do
-      "exchange"
-    end
-    let :queue do
-      "queue"
-    end
-    let :queue_error do
-      "queue_error"
-    end
-
     let :a_signal do
       Microbrew.Agent.new(
-        exchange:    exchange,
-        queue:       queue,
-        queue_error: queue_error
+        exchange:    "exchange",
+        queue:       "queue",
+        queue_error: "queue_error"
       ) |> signal "some::event"
     end
 
@@ -231,6 +232,64 @@ defmodule AgentTest do
       expect(Microbrew.Producer)
         |> to_have_received :publish
         |> with [an_agent.exchange, encoded_payload]
+    end
+  end
+
+  describe ".stop" do
+    before :each do
+      allow(Microbrew.Consumer)
+        |> to_receive(close: fn (_) -> :ok end)
+
+      :ok
+    end
+
+    let :consumer do
+      %Microbrew.Consumer{channel: nil, queue: nil}
+    end
+
+    let :agent do
+      %Microbrew.Agent{
+        exchange:    "exchange",
+        queue:       "queue",
+        queue_error: "queue_error",
+        consumer:    consumer
+      }
+    end
+
+    it "closes the AMPQ channel" do
+      agent |> stop
+
+      expect(Microbrew.Consumer)
+        |> to_have_received :close
+        |> with agent.consumer
+    end
+
+    context "When the close operation returns :ok" do
+      before :each do
+        allow(Microbrew.Consumer)
+          |> to_receive(close: fn (_) -> :ok end)
+
+        :ok
+      end
+
+      let :consumer do
+        %Microbrew.Consumer{channel: nil, queue: nil}
+      end
+
+      let :agent do
+        %Microbrew.Agent{
+          exchange:    "exchange",
+          queue:       "queue",
+          queue_error: "queue_error",
+          consumer:    consumer
+        }
+      end
+
+      it "returns an Agent with no Consumer" do
+        a = agent |> stop
+
+        expect(a.consumer) |> to_be_nil
+      end
     end
   end
 end
