@@ -1,6 +1,18 @@
 # Microbrew
 A Microservices Toolkit. Provides a simple, composable framework for exchanging messages in a distributed system. Currently supports AMQP message brokers, but it has only been tested with RabbitMQ so far.
 
+# Configuration
+Microbrew uses configuration specified in your `config.exs` file to connect to a
+RabbitMQ instance. The default configuration is:
+
+```elixir
+config :microbrew, :rabbitmq,
+  username: "guest",
+  password: "guest",
+  host: "localhost",
+  port: 5672
+```
+
 ## Agents
 Agents are at the core of Microbrew.
 Not to be mistaken with an `Elixir.Agent`, a `Microbrew.Agent` is an entity that

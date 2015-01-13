@@ -14,6 +14,11 @@ use Mix.Config
 #       level: :info,
 #       format: "$date $time [$level] $metadata$message\n",
 #       metadata: [:user_id]
+config :microbrew, :rabbitmq,
+  username: "guest",
+  password: "guest",
+  host: "localhost",
+  port: 5672
 
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
