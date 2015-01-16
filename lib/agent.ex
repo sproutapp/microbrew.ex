@@ -2,10 +2,6 @@ defmodule Microbrew.Agent do
   defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil
   alias __MODULE__
 
-  defmodule Signal do
-    defstruct agent: nil, event: nil
-  end
-
   def new(options \\ []) do
     exchange = Keyword.get(options, :exchange, "")
     queue = Keyword.get(options, :queue, "")
@@ -29,8 +25,12 @@ defmodule Microbrew.Agent do
     %{agent | consumer: consumer}
   end
 
+  def signal(agent, event, cid) do
+    cid = if cid != nil, do: cid, else: UUID.uuid4()
+    %Signal{agent: agent, event: event, cid: cid}
+  end
   def signal(agent, event) do
-    %Signal{agent: agent, event: event}
+    signal(agent, event, nil)
   end
 
   def on(signal, :data, callback) when is_function(callback, 2) do
@@ -41,7 +41,7 @@ defmodule Microbrew.Agent do
       {_, payload} = JSX.decode(payload)
 
       if payload["event"] == signal.event do
-        callback.(payload["data"], meta)
+        callback.(payload, meta)
       end
     end
 
@@ -51,7 +51,8 @@ defmodule Microbrew.Agent do
   def emit(signal, payload) do
     payload = %Microbrew.Payload{
       event: signal.event,
-      data: payload
+      data: payload,
+      cid: signal.cid
     }
     {_, payload} = JSX.encode(payload)
 

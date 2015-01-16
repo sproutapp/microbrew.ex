@@ -112,7 +112,7 @@ defmodule AgentTest do
     end
   end
 
-  describe ".signal" do
+  describe ".signal/2" do
     let :agent do
       %Microbrew.Agent{}
     end
@@ -125,6 +125,37 @@ defmodule AgentTest do
 
       expect sig.event
         |> to_eq :data
+    end
+
+    it "creates a signal with a generated correlation id" do
+      sig = agent |> signal(:data)
+
+      expect sig.cid
+        |> not_to_be_nil
+    end
+  end
+
+  describe ".signal/3" do
+    context "When the third parameter is nil" do
+      let :signal do
+        %Microbrew.Agent{} |> signal("my-event", nil)
+      end
+
+      it "creates a signal with a generated correlation id" do
+        expect signal.cid
+          |> not_to_be_nil
+      end
+    end
+
+    context "When the third parameter is not nil" do
+      let :signal_with_cid do
+        %Microbrew.Agent{} |> signal("my-event", "my-id")
+      end
+
+      it "creates a signal with a given correlation id" do
+        expect signal_with_cid.cid
+          |> to_eq "my-id"
+      end
     end
   end
 
@@ -176,7 +207,8 @@ defmodule AgentTest do
               |> to_receive(subscribe: fn (_, _, cb) ->
                 payload = %{
                   "event" => "some::event",
-                  "data"  => "some data"
+                  "data"  => "some data",
+                  "cid"   => "my-id"
                 }
                 {_, payload} = JSX.encode(payload)
 
@@ -184,7 +216,7 @@ defmodule AgentTest do
               end)
 
             a_signal |> on(:data, fn (payload, _) ->
-              expect payload
+              expect payload["data"]
                 |> to_eq "some data"
             end)
           end
@@ -220,7 +252,8 @@ defmodule AgentTest do
     let :encoded_payload do
       p = %Microbrew.Payload{
         event: a_signal.event,
-        data: payload
+        data: payload,
+        cid: a_signal.cid
       }
       {_, p} = JSX.encode p
       p
