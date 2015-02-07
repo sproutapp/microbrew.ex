@@ -2,6 +2,8 @@ defmodule Microbrew.Agent do
   defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil
   alias __MODULE__
 
+  require IEx
+
   def new(options \\ []) do
     exchange = Keyword.get(options, :exchange, "")
     queue = Keyword.get(options, :queue, "")
@@ -46,6 +48,22 @@ defmodule Microbrew.Agent do
     end
 
     signal.agent
+  end
+
+  def stream(signal, evt \\ :data) do
+    Stream.resource(
+      fn -> signal end,
+      fn signal ->
+        channel = signal.agent.consumer.channel
+        queue = signal.agent.queue
+
+        case AMQP.Basic.get channel, queue do
+          {:ok, payload, meta} -> { [{payload, meta}], signal}
+          {:empty, _meta} -> {:halt, signal}
+        end
+      end,
+      fn signal -> signal end
+    )
   end
 
   def emit(signal, payload) do
