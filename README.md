@@ -78,6 +78,17 @@ agent
  end
 ```
 
+### .stream
+Lets you access `Signal` data as a Stream. Each value in the stream is a tuple
+containing the `payload` and `meta` information.
+
+```elixir
+agent
+  |> signal("sensor::received")
+  |> stream
+# #Function<25.29647706/2 in Stream.resource/3>
+```
+
 ### .emit
 Publishes a payload under a given `Signal`. Payloads are published in
 JSON format.

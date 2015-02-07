@@ -225,6 +225,41 @@ defmodule AgentTest do
     end
   end
 
+  describe ".stream" do
+    let :a_signal do
+      %Microbrew.Agent{
+        queue: "queue",
+        consumer: %Microbrew.Consumer{channel: "channel", queue: nil},
+      } |> signal("some::event")
+    end
+
+    let :data do
+      payload = %{
+        "event" => "some::event",
+        "data"  => "some data",
+        "cid"   => "my-id"
+      }
+      {_, payload} = JSX.encode(payload)
+      payload
+    end
+
+    before :each do
+      allow(AMQP.Basic)
+        |> to_receive(get: fn (_channel, _queue) ->
+          {:ok, data, []}
+        end)
+
+      :ok
+    end
+
+    it "returns a Stream of data" do
+      stream = a_signal |> stream
+
+      expect(stream |> Enum.take(4))
+        |> to_eq Enum.map 1..4, fn (_) -> {data, []} end
+    end
+  end
+
   describe ".emit" do
     before :each do
       allow(Microbrew.Producer)
