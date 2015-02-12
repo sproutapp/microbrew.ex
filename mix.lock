@@ -3,6 +3,6 @@
   "exjsx": {:hex, :exjsx, "3.1.0"},
   "jsx": {:hex, :jsx, "2.4.0"},
   "meck": {:hex, :meck, "0.8.2"},
-  "pavlov": {:hex, :pavlov, "0.1.2"},
+  "pavlov": {:hex, :pavlov, "0.2.2"},
   "rabbit_common": {:hex, :rabbit_common, "3.4.0"},
   "uuid": {:hex, :uuid, "0.1.5"}}
