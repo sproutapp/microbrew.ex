@@ -218,6 +218,11 @@ defmodule AgentTest do
         } |> signal("some::event")
       end
 
+      let :a_stream do
+        import Microbrew.Agent
+        a_signal |> stream
+      end
+
       let :data do
         payload = %{
           "event" => "some::event",
@@ -228,20 +233,60 @@ defmodule AgentTest do
         payload
       end
 
-      before :each do
-        allow(AMQP.Basic)
-          |> to_receive(get: fn (_channel, _queue) ->
-            {:ok, data, []}
-          end)
+      context "When data[\"event\"] matches the signal" do
+        before :each do
+          allow(AMQP.Basic)
+            |> to_receive(get: fn (_channel, _queue) ->
+              {:ok, data, []}
+            end)
 
-        :ok
+          :ok
+        end
+
+        it "returns a Stream of data" do
+          expect(a_stream |> Enum.take(4))
+            |> to_eq Enum.map 1..4, fn (_) ->
+              {_, decoded} = JSX.decode data
+              {decoded, []}
+            end
+        end
       end
 
-      it "returns a Stream of data" do
-        stream = a_signal |> stream
+      context "When data[\"event\"] does not match the signal" do
+        let :bad_data do
+          payload = %{
+            "event" => "some::other_event",
+            "data"  => "some data",
+            "cid"   => "my-id"
+          }
+          {_, payload} = JSX.encode(payload)
+          payload
+        end
 
-        expect(stream |> Enum.take(4))
-          |> to_eq Enum.map 1..4, fn (_) -> {data, []} end
+        before :each do
+          Agent.start_link fn -> 0 end, name: :counter
+
+          allow(AMQP.Basic)
+            |> to_receive(get: fn (_channel, _queue) ->
+              Agent.update :counter, fn counter -> counter + 1 end
+              count = Agent.get :counter, fn counter -> counter end
+
+              case rem(count, 2) do
+                0 -> {:ok, bad_data, []}
+                1 -> {:ok, data, []}
+              end
+            end)
+
+          :ok
+        end
+
+        it "discards the items" do
+          expect(a_stream |> Enum.take(4))
+            |> to_eq Enum.map 1..4, fn (_) ->
+              {_, decoded} = JSX.decode data
+              {decoded, []}
+            end
+        end
       end
     end
 
