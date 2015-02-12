@@ -64,6 +64,13 @@ defmodule Microbrew.Agent do
       end,
       fn signal -> signal end
     )
+    |> Stream.map(fn {value, meta} ->
+      {_, payload} = JSX.decode value
+      {payload, meta}
+    end)
+    |> Stream.reject(fn {value, _meta} ->
+      value["event"] != signal.event
+    end)
   end
 
   def emit(signal, payload) do
