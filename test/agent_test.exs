@@ -265,6 +265,9 @@ defmodule AgentTest do
       allow(Microbrew.Producer)
         |> to_receive(publish: fn (_, _) -> nil end)
 
+      allow(Microbrew.Consumer)
+        |> to_receive(new: fn (_, _, _) -> {:ok, nil} end)
+
       :ok
     end
 
