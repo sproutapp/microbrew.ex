@@ -24,7 +24,13 @@ You can create an agent using the `new` method:
 Microbrew.Agent.new(
   exchange:    "an_exchange",
   queue:       "a_queue",
-  queue_error: "an_error_queue"
+  queue_error: "an_error_queue",
+  options: [
+    exchange: [
+      type: :fanout,
+      durable: true
+    ]
+  ]
 )
 # => %Microbrew.Agent{exchange: "an_exchange", queue: "a_queue", queue_error: "an_error_queue"}
 ```
