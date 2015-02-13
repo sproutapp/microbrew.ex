@@ -2,8 +2,6 @@ defmodule Microbrew.Agent do
   defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil
   alias __MODULE__
 
-  require IEx
-
   def new(options \\ []) do
     exchange = Keyword.get(options, :exchange, "")
     queue = Keyword.get(options, :queue, "")
