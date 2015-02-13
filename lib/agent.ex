@@ -1,19 +1,15 @@
 defmodule Microbrew.Agent do
-  defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil
+  defstruct exchange: nil, queue: nil, queue_error: nil, consumer: nil, options: []
   alias __MODULE__
 
   def new(options \\ []) do
-    exchange = Keyword.get(options, :exchange, "")
-    queue = Keyword.get(options, :queue, "")
-    queue_error = Keyword.get(options, :queue_error, nil)
-
-    agent = %Agent{
-      exchange: exchange,
-      queue: queue,
-      queue_error: queue_error,
+    %Agent{
+      exchange: Keyword.get(options, :exchange, ""),
+      queue: Keyword.get(options, :queue, ""),
+      queue_error: Keyword.get(options, :queue_error, nil),
+      options: Keyword.get(options, :options, [])
     }
-
-    __MODULE__.consume(agent)
+    |> Agent.consume
   end
 
   def consume(agent) do
@@ -21,7 +17,7 @@ defmodule Microbrew.Agent do
       agent = Microbrew.Agent.stop agent
     end
 
-    {:ok, consumer} = Microbrew.Consumer.new(agent.exchange, agent.queue, agent.queue_error)
+    {:ok, consumer} = Microbrew.Consumer.new(agent.exchange, agent.queue, agent.queue_error, agent.options)
     %{agent | consumer: consumer}
   end
 
