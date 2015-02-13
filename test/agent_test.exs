@@ -55,7 +55,7 @@ defmodule AgentTest do
       before :each do
         allow(Microbrew.Agent, [:no_link, :passthrough])
         allow(Microbrew.Consumer)
-          |> to_receive(new: fn (_, _, _) -> {:ok, consumer} end)
+          |> to_receive(new: fn (_, _, _, _) -> {:ok, consumer} end)
         :ok
       end
 
@@ -64,7 +64,7 @@ defmodule AgentTest do
 
         expect Microbrew.Consumer
           |> to_have_received :new
-          |> with ["exchange", "queue", "queue_error"]
+          |> with ["exchange", "queue", "queue_error", :_]
 
         expect sample.consumer
           |> to_eq consumer
@@ -85,8 +85,8 @@ defmodule AgentTest do
         end
 
         before :each do
-          allow(Microbrew.Consumer, [:no_link, :passthrough])
-            |> to_receive(new: fn (_, _, _) -> {:ok, consumer} end)
+          allow(Microbrew.Consumer)
+            |> to_receive(new: fn (_, _, _, _) -> {:ok, consumer} end)
 
           allow(Microbrew.Agent, [:no_link, :passthrough])
             |> to_receive(stop: fn(a) -> a end)
