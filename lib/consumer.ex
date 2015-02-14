@@ -8,8 +8,6 @@ defmodule Microbrew.Consumer do
     {:ok, conn} = AMQP.Connection.open Microbrew.Config.rabbitmq_url
     {:ok, chan} = AMQP.Channel.open(conn)
 
-    AMQP.Queue.bind chan, queue, start_exchange({chan, exchange}, options)
-
     {:ok, %Consumer{channel: chan, queue: queue}}
   end
 
