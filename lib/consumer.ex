@@ -7,12 +7,6 @@ defmodule Microbrew.Consumer do
   def new(exchange, queue, queue_error, options \\ []) do
     {:ok, conn} = AMQP.Connection.open Microbrew.Config.rabbitmq_url
     {:ok, chan} = AMQP.Channel.open(conn)
-    AMQP.Queue.declare(chan, queue_error, durable: true)
-    # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
-    AMQP.Queue.declare(chan, queue, durable: true, arguments: [
-      {"x-dead-letter-exchange", :longstr, ""},
-      {"x-dead-letter-routing-key", :longstr, queue_error}
-    ])
 
     AMQP.Queue.bind chan, queue, start_exchange({chan, exchange}, options)
 
