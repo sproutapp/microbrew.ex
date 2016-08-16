@@ -33,7 +33,7 @@ defmodule Microbrew.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      { :pavlov, "~> 0.2.0" },
+      { :pavlov, "~> 0.2.0", only: :test },
       { :amqp, "~> 0.1.0" },
       { :exjsx, "~> 3.1.0" },
       { :uuid, "~> 0.1.5" }
